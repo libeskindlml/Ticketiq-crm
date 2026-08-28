@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TicketIQ — ניהול פניות לקוחות</title>
+<style>
+  :root {
+    --navy: #16305e;
+    --navy-dark: #0e2145;
+    --bg: #f3f5f9;
+    --card: #ffffff;
+    --border: #dde3ee;
+    --text: #1c2536;
+    --muted: #6b7688;
+    --high: #fde8e8;
+    --med: #fdf0e0;
+    --low: #e6f6ea;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Segoe UI", "Heebo", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, var(--navy), var(--navy-dark));
+    color: #fff;
+    padding: 28px 32px;
+    box-shadow: 0 2px 10px rgba(14, 33, 69, 0.25);
+  }
+
+  header h1 {
+    font-size: 2rem;
+    letter-spacing: 0.5px;
+  }
+
+  header p {
+    margin-top: 4px;
+    opacity: 0.85;
+    font-size: 0.95rem;
+  }
+
+  main {
+    max-width: 1000px;
+    margin: 32px auto;
+    padding: 0 20px;
+    display: grid;
+    gap: 24px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 4px rgba(28, 37, 54, 0.06);
+  }
+
+  .card h2 {
+    font-size: 1.15rem;
+    color: var(--navy);
+    margin-bottom: 16px;
+  }
+
+  form {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr auto auto;
+    gap: 12px;
+    align-items: end;
+  }
+
+  .field { display: grid; gap: 6px; }
+
+  label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  input, select {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    background: #fff;
+    color: var(--text);
+  }
+
+  input:focus, select:focus {
+    outline: 2px solid var(--navy);
+    outline-offset: 1px;
+    border-color: var(--navy);
+  }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+  }
+
+  .btn-add {
+    background: var(--navy);
+    color: #fff;
+    padding: 11px 26px;
+    font-weight: 600;
+    transition: background 0.15s;
+  }
+
+  .btn-add:hover { background: var(--navy-dark); }
+  .btn-add:disabled { opacity: 0.6; cursor: wait; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+
+  th {
+    text-align: right;
+    padding: 10px 12px;
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 700;
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  tr.p-high td { background: var(--high); }
+  tr.p-med td { background: var(--med); }
+  tr.p-low td { background: var(--low); }
+
+  .status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: #e8ecf5;
+    color: var(--navy);
+  }
+
+  .status-badge.closed {
+    background: #d9dde5;
+    color: var(--muted);
+  }
+
+  .btn-close {
+    background: #fff;
+    border: 1px solid var(--navy);
+    color: var(--navy);
+    padding: 6px 14px;
+    font-weight: 600;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn-close:hover { background: var(--navy); color: #fff; }
+  .btn-close:disabled { opacity: 0.5; cursor: wait; }
+
+  .empty, .loading, .error {
+    text-align: center;
+    padding: 32px;
+    color: var(--muted);
+  }
+
+  .error { color: #b42318; }
+
+  @media (max-width: 720px) {
+    form { grid-template-columns: 1fr; }
+    .table-wrap { overflow-x: auto; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>TicketIQ</h1>
+  <p>מערכת ניהול פניות לקוחות</p>
+</header>
+
+<main>
+  <section class="card">
+    <h2>פנייה חדשה</h2>
+    <form id="ticket-form">
+      <div class="field">
+        <label for="customer_name">שם לקוח</label>
+        <input type="text" id="customer_name" required placeholder="ישראל ישראלי">
+      </div>
+      <div class="field">
+        <label for="subject">נושא</label>
+        <input type="text" id="subject" required placeholder="תיאור קצר של הפנייה">
+      </div>
+      <div class="field">
+        <label for="priority">עדיפות</label>
+        <select id="priority">
+          <option value="גבוהה">גבוהה</option>
+          <option value="בינונית" selected>בינונית</option>
+          <option value="נמוכה">נמוכה</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-add" id="btn-add">הוסף</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>רשימת פניות</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>שם לקוח</th>
+            <th>נושא</th>
+            <th>עדיפות</th>
+            <th>סטטוס</th>
+            <th>נוצר בתאריך</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tickets-body">
+          <tr><td colspan="6" class="loading">טוען פניות…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://yvirccznifurgampmakw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2aXJjY3puaWZ1cmdhbXBtYWt3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5MDE2ODIsImV4cCI6MjEwMzQ3NzY4Mn0.UL1b1Sbs6MubG0nhsEEp-5VDpExlWuhDAAaLL593bTk';
+
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const tbody = document.getElementById('tickets-body');
+  const form = document.getElementById('ticket-form');
+  const btnAdd = document.getElementById('btn-add');
+
+  const priorityClass = { 'גבוהה': 'p-high', 'בינונית': 'p-med', 'נמוכה': 'p-low' };
+
+  function escapeHtml(str) {
+    return String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleDateString('he-IL') + ' ' +
+           d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  async function loadTickets() {
+    tbody.innerHTML = '<tr><td colspan="6" class="loading">טוען פניות…</td></tr>';
+    const { data, error } = await db
+      .from('tickets')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      tbody.innerHTML = '<tr><td colspan="6" class="error">שגיאה בטעינת הנתונים: ' +
+        escapeHtml(error.message) + '</td></tr>';
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">אין פניות עדיין — הוסיפו פנייה ראשונה למעלה.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = '';
+    for (const t of data) {
+      const tr = document.createElement('tr');
+      tr.className = priorityClass[t.priority] || '';
+      const isClosed = t.status === 'סגור';
+      tr.innerHTML =
+        '<td>' + escapeHtml(t.customer_name) + '</td>' +
+        '<td>' + escapeHtml(t.subject) + '</td>' +
+        '<td>' + escapeHtml(t.priority) + '</td>' +
+        '<td><span class="status-badge' + (isClosed ? ' closed' : '') + '">' +
+          escapeHtml(t.status || 'פתוח') + '</span></td>' +
+        '<td>' + formatDate(t.created_at) + '</td>' +
+        '<td>' + (isClosed ? '' :
+          '<button class="btn-close" data-id="' + escapeHtml(t.id) + '">✓ סגור</button>') + '</td>';
+      tbody.appendChild(tr);
+    }
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const customer_name = document.getElementById('customer_name').value.trim();
+    const subject = document.getElementById('subject').value.trim();
+    const priority = document.getElementById('priority').value;
+    if (!customer_name || !subject) return;
+
+    btnAdd.disabled = true;
+    const { error } = await db.from('tickets').insert({
+      customer_name,
+      subject,
+      priority,
+      status: 'פתוח'
+    });
+    btnAdd.disabled = false;
+
+    if (error) {
+      alert('שגיאה בהוספת הפנייה: ' + error.message);
+      return;
+    }
+    form.reset();
+    document.getElementById('priority').value = 'בינונית';
+    loadTickets();
+  });
+
+  tbody.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.btn-close');
+    if (!btn) return;
+    btn.disabled = true;
+    const { error } = await db
+      .from('tickets')
+      .update({ status: 'סגור' })
+      .eq('id', btn.dataset.id);
+    if (error) {
+      alert('שגיאה בעדכון הסטטוס: ' + error.message);
+      btn.disabled = false;
+      return;
+    }
+    loadTickets();
+  });
+
+  loadTickets();
+</script>
+
+</body>
+</html>
